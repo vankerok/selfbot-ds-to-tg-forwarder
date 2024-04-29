@@ -6,6 +6,10 @@ from requests import get
 from json import loads
 from datetime import datetime
 
+alpha_mirror_id = '42410'
+eth_alpha_id = '42409'
+sol_alpha_id = '42408'
+
 def clear_file_with_messageids():
     clear_file = open('messageids.txt', 'r+')
     clear_file.truncate(0)
@@ -17,7 +21,7 @@ def change_time():
     if hour_now < 3:
         day_now -= 1
     elif hour_now == 3:
-        clear_file_with_messageids(hour_now)
+        clear_file_with_messageids()
     if month_now < 10:
         month_now = '0'+str(month_now)
     if day_now < 10:
@@ -34,11 +38,18 @@ def telegram_client_authorise():
         client.sign_in(phone, input('Enter the code: '))
     return receiver, client
 
-def telegram_send_message(messages_dict, client, receiver):
+def telegram_send_message(messages_dict, channel_id, client, receiver):
+    id_to_thread = {
+        '999522435776917564': alpha_mirror_id,
+        '1187791779706179614': alpha_mirror_id,
+        '1071104474753548328': eth_alpha_id,
+        '1012650929432039424': alpha_mirror_id,
+        '1007666035702374541': sol_alpha_id
+    }
     for message in range(len(messages_dict)):
         if messages_dict[message] != 'None':
             try:
-                client.send_message(receiver, messages_dict[message], parse_mode='html')
+                client.send_message(receiver, id_to_thread[channel_id], messages_dict[message], parse_mode='html')
             except Exception as e:
                 print(e)
 
@@ -58,7 +69,7 @@ def parse_discord_messages():
                     else:
                         message_list.append('#'+channelnames[channels_change]+'\n'+value['content']+'\n')
                         messageids.write(value['id']+'\n')
-    return message_list
+    return message_list, channelid[channels_change]
 
 if __name__ == '__main__':
     receiver, client = telegram_client_authorise()
