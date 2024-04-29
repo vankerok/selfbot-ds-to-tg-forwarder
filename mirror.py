@@ -5,6 +5,8 @@ from telethon.sessions import StringSession
 from requests import get
 from json import loads
 from datetime import datetime
+from telethon.tl.types import PeerChannel
+
 
 alpha_mirror_id = '42410'
 eth_alpha_id = '42409'
@@ -32,7 +34,7 @@ def change_time():
 def telegram_client_authorise():
     client = TelegramClient(StringSession(), api_id, api_hash).start(phone=phone)
     client.connect()
-    receiver = client.get_entity(destination_user_username)
+    receiver = client.get_entity(PeerChannel(destination_user_username))
     if not client.is_user_authorized():
         client.send_code_request(phone)
         client.sign_in(phone, input('Enter the code: '))
@@ -60,16 +62,16 @@ def parse_discord_messages():
         page = get(f'https://discord.com/api/v9/channels/{channelid[channels_change]}/messages', headers=headers)
         source_data = page.text
         jsonn = loads(source_data)
-        for value in jsonn:
-            if str(today) in value['timestamp']:
-                with open('messageids.txt', 'r+', encoding='utf-8') as messageids:
-                    messageids_read = messageids.read()
-                    if value['id'] in messageids_read:
-                        pass
-                    else:
-                        message_list.append('#'+channelnames[channels_change]+'\n'+value['content']+'\n')
-                        messageids.write(value['id']+'\n')
+        if isinstance(jsonn, list):
+            for value in jsonn:
+                if 'timestamp' in value and str(today) in value['timestamp']:
+                    with open('messageids.txt', 'r+', encoding='utf-8') as messageids:
+                        messageids_read = messageids.read()
+                        if value['id'] not in messageids_read:
+                            message_list.append('#'+channelnames[channels_change]+'\n'+value['content']+'\n')
+                            messageids.write(value['id']+'\n')
     return message_list, channelid[channels_change]
+
 
 if __name__ == '__main__':
     receiver, client = telegram_client_authorise()
